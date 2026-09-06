@@ -110,7 +110,16 @@ offer, the default 0.5 probability threshold was tuned:
 81% to 65%. This threshold will be applied in the API's prediction logic
 rather than relying on ML.NET's default 0.5 cutoff.
 
+**Selected operating threshold: 0.30** — best F1 score in the final training
+run (72.6%), moving recall from ~50% to ~75% while precision remains reasonable
+at ~70%.
+
+*Note: metrics show minor run-to-run variance (e.g., accuracy 83.4–83.9%,
+optimal threshold 0.25–0.30) due to non-determinism in ML.NET's SDCA trainer
+internals, even with a fixed seed. The final numbers above reflect the model
+actually shipped in model.zip.*
+
 
 ## Status
 
-🚧 In progress. Current stage: Phase 6 — Save & Load the Model.
+🚧 In progress. Current stage: Phase 7 — ASP.NET Core Web API Integration.

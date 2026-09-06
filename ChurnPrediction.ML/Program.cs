@@ -119,3 +119,45 @@ foreach (var threshold in new[] { 0.5f, 0.4f, 0.3f, 0.25f, 0.2f })
 
     Console.WriteLine($"{threshold:F2}      | {precision:P1}    | {recall:P1}  | {f1:P1}");
 }
+
+// ============================================================
+// Phase 6: Save the Model
+// ============================================================
+
+// Save into the API project's MLModels folder directly, so it's
+// immediately available where it'll actually be consumed in Phase 7.
+// ML.NET bakes the data schema into the .zip alongside the model itself —
+// that's why Save() needs trainData.Schema, not just the trained model.
+var modelOutputPath = Path.Combine(
+    AppContext.BaseDirectory, "..", "..", "..", "..",
+    "ChurnPrediction.Api", "MLModels", "model.zip");
+
+mlContext.Model.Save(trainedModel, trainData.Schema, modelOutputPath);
+
+Console.WriteLine($"\nModel saved to: {Path.GetFullPath(modelOutputPath)}");
+
+// ============================================================
+// Verify: load the saved model fresh and confirm it still predicts
+// ============================================================
+
+Console.WriteLine("\n--- Verifying saved model loads correctly ---");
+
+// NOTE: loading requires a NEW MLContext to properly simulate a fresh
+// process — reusing the same mlContext instance would not catch
+// serialization issues the way a genuinely separate load would.
+var verifyContext = new MLContext();
+ITransformer loadedModel = verifyContext.Model.Load(modelOutputPath, out var loadedSchema);
+
+var loadedPredictionEngine = verifyContext.Model
+    .CreatePredictionEngine<ChurnData, ChurnPredictionOutput>(loadedModel);
+
+// Grab one real row from the test set to predict on, rather than
+// making up fake data — proves the whole schema round-trips correctly.
+var testSample = mlContext.Data
+    .CreateEnumerable<ChurnData>(testData, reuseRowObject: false)
+    .First();
+
+var verifyPrediction = loadedPredictionEngine.Predict(testSample);
+
+Console.WriteLine($"Loaded model prediction — Label: {verifyPrediction.PredictedLabel}, Probability: {verifyPrediction.Probability}");
+Console.WriteLine("Model save/load round-trip verified successfully.");
