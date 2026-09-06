@@ -1,51 +1,30 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using ChurnPrediction.ML.Models;
+using Microsoft.ML;
 
-var csvPath = Path.Combine(AppContext.BaseDirectory, "Data", "telco_churn.csv");
-var lines = File.ReadAllLines(csvPath);
+// MLContext is the entry point for all ML.NET operations — think of it like
+// a DbContext, but for machine learning pipelines. Seeding it makes results
+// reproducible across runs, which matters when you're comparing trainers later.
+var mlContext = new MLContext(seed: 0);
 
-var header = lines[0].Split(',');
-var dataRows = lines.Skip(1).ToArray();
+var dataPath = Path.Combine(AppContext.BaseDirectory, "Data", "telco_churn.csv");
 
-Console.WriteLine($"Total columns: {header.Length}");
-Console.WriteLine($"Total rows: {dataRows.Length}");
-Console.WriteLine();
+// IDataView is ML.NET's lazy, columnar data structure — it isn't a List<T>,
+// it's evaluated on demand as the pipeline consumes it.
+IDataView fullData = mlContext.Data.LoadFromTextFile<ChurnData>(
+    path: dataPath,
+    hasHeader: true,
+    separatorChar: ',');
 
-Console.WriteLine("--- Column Index Map ---");
-for (int i = 0; i < header.Length; i++)
+Console.WriteLine("Data loaded successfully.");
+
+// Sanity check: preview the first 5 rows to confirm columns mapped correctly
+var preview = fullData.Preview(maxRows: 5);
+foreach (var row in preview.RowView)
 {
-    Console.WriteLine($"{i}: {header[i]}");
+    foreach (var col in row.Values)
+    {
+        Console.Write($"{col.Key}: {col.Value} | ");
+    }
+    Console.WriteLine();
+    Console.WriteLine("---");
 }
-Console.WriteLine();
-
-// Look up indices BY NAME instead of hardcoding — safer since you edited the file
-int churnLabelIndex = Array.IndexOf(header, "Churn Label");
-int totalChargesIndex = Array.IndexOf(header, "Total Charges");
-
-if (churnLabelIndex == -1 || totalChargesIndex == -1)
-{
-    Console.WriteLine("ERROR: Expected column not found. Check exact header spelling above.");
-    return;
-}
-
-Console.WriteLine($"'Churn Label' found at index {churnLabelIndex}");
-Console.WriteLine($"'Total Charges' found at index {totalChargesIndex}");
-
-var churnCounts = dataRows
-    .Select(row => row.Split(',')[churnLabelIndex])
-    .GroupBy(v => v)
-    .Select(g => new { Value = g.Key, Count = g.Count() });
-
-Console.WriteLine("\n--- Churn Label Distribution ---");
-foreach (var c in churnCounts)
-{
-    var pct = (c.Count / (double)dataRows.Length) * 100;
-    Console.WriteLine($"{c.Value}: {c.Count} ({pct:F1}%)");
-}
-
-var blankTotalCharges = dataRows
-    .Select(row => row.Split(',')[totalChargesIndex])
-    .Count(v => string.IsNullOrWhiteSpace(v));
-
-Console.WriteLine($"\nBlank/empty 'Total Charges' values: {blankTotalCharges}");

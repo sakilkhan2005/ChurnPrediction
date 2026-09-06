@@ -80,4 +80,4 @@ C# / .NET 8, ML.NET, ASP.NET Core Web API, xUnit, Docker
 
 ## Status
 
-🚧 In progress. Current stage: Phase 2 — Data Loading & Schema.
+🚧 In progress. Current stage: Phase 3 — Train/Test Split & Transforms.
