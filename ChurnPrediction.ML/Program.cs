@@ -30,7 +30,8 @@ var numericColumns = new[]
     "Age", "NumberOfDependents", "NumberOfReferrals", "TenureInMonths",
     "AvgMonthlyLongDistanceCharges", "AvgMonthlyGBDownload", "MonthlyCharge",
     "TotalCharges", "TotalRefunds", "TotalExtraDataCharges",
-    "TotalLongDistanceCharges", "SatisfactionScore"
+    "TotalLongDistanceCharges"
+    // "SatisfactionScore" removed — testing for leakage
 };
 
 var oneHotPairs = categoricalColumns
@@ -78,15 +79,43 @@ Console.WriteLine("Model training complete.");
 var predictions = trainedModel.Transform(testData);
 var samplePreview = predictions.Preview(maxRows: 3);
 
-Console.WriteLine("\n--- Sample Predictions ---");
-foreach (var row in samplePreview.RowView)
-{
-    var label = row.Values.First(c => c.Key == "Label").Value;
-    var predictedLabel = row.Values.First(c => c.Key == "PredictedLabel").Value;
-    var score = row.Values.First(c => c.Key == "Score").Value;
-    var probability = row.Values.First(c => c.Key == "Probability").Value;
+// ============================================================
+// Phase 5: Evaluation
+// ============================================================
 
-    Console.WriteLine(
-        $"Actual: {label} | Predicted: {predictedLabel} | " +
-        $"Score: {score} | Probability: {probability}");
+var metrics = mlContext.BinaryClassification.Evaluate(
+    predictions, labelColumnName: "Label");
+
+Console.WriteLine("\n--- Model Evaluation Metrics ---");
+Console.WriteLine($"Accuracy:  {metrics.Accuracy:P2}");
+Console.WriteLine($"AUC:       {metrics.AreaUnderRocCurve:P2}");
+Console.WriteLine($"F1 Score:  {metrics.F1Score:P2}");
+Console.WriteLine($"Precision: {metrics.PositivePrecision:P2}");
+Console.WriteLine($"Recall:    {metrics.PositiveRecall:P2}");
+
+Console.WriteLine("\n--- Confusion Matrix ---");
+Console.WriteLine(metrics.ConfusionMatrix.GetFormattedConfusionTable());
+
+// ============================================================
+// Threshold Tuning — explore the precision/recall tradeoff
+// ============================================================
+
+var predictionResults = mlContext.Data
+    .CreateEnumerable<PredictionResult>(predictions, reuseRowObject: false)
+    .ToList();
+
+Console.WriteLine("\n--- Threshold Tuning ---");
+Console.WriteLine("Threshold | Precision | Recall  | F1");
+
+foreach (var threshold in new[] { 0.5f, 0.4f, 0.3f, 0.25f, 0.2f })
+{
+    int tp = predictionResults.Count(p => p.Label && p.Probability >= threshold);
+    int fp = predictionResults.Count(p => !p.Label && p.Probability >= threshold);
+    int fn = predictionResults.Count(p => p.Label && p.Probability < threshold);
+
+    double precision = (tp + fp == 0) ? 0 : tp / (double)(tp + fp);
+    double recall = (tp + fn == 0) ? 0 : tp / (double)(tp + fn);
+    double f1 = (precision + recall == 0) ? 0 : 2 * precision * recall / (precision + recall);
+
+    Console.WriteLine($"{threshold:F2}      | {precision:P1}    | {recall:P1}  | {f1:P1}");
 }

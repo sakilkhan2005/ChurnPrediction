@@ -78,6 +78,39 @@ Prediction + Probability
 
 C# / .NET 8, ML.NET, ASP.NET Core Web API, xUnit, Docker
 
+
+## Model Performance & Threshold Selection
+
+**Algorithm:** SdcaLogisticRegression (ML.NET)
+
+**Initial result:** 99.4% AUC — investigated and found to be inflated by data
+leakage. `Satisfaction Score` was very likely collected concurrently with the
+churn decision itself (as part of the same exit/retention interaction), rather
+than being an independent early-warning signal. Removed as a feature.
+
+**Corrected result** (33 → 32 features, `Satisfaction Score` removed):
+- Accuracy: 83.4%
+- AUC: 90.4%
+- F1: 62.7% (at default 0.5 threshold)
+
+**Threshold tuning:** Since missing a churner (false negative) is the costlier
+mistake for this business — a lost customer with zero retention outreach —
+versus a false alarm (false positive) costing only an unnecessary retention
+offer, the default 0.5 probability threshold was tuned:
+
+| Threshold | Precision | Recall | F1 |
+|---|---|---|---|
+| 0.50 (default) | 80.9% | 51.2% | 62.7% |
+| 0.30 | 68.7% | 74.8% | 71.6% |
+| **0.25 (chosen)** | 65.2% | 81.0% | 72.2% |
+| 0.20 | 60.4% | 84.2% | 70.3% |
+
+**Selected operating threshold: 0.25** — best F1 score, and moves recall from
+51% to 81% (catching far more actual churners) while precision only drops from
+81% to 65%. This threshold will be applied in the API's prediction logic
+rather than relying on ML.NET's default 0.5 cutoff.
+
+
 ## Status
 
-🚧 In progress. Current stage: Phase 5 — Evaluation.
+🚧 In progress. Current stage: Phase 6 — Save & Load the Model.
