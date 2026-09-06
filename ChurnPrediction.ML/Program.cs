@@ -1,30 +1,63 @@
 ﻿using ChurnPrediction.ML.Models;
+using ChurnPrediction.ML.Training;
 using Microsoft.ML;
+using Microsoft.ML.Data;
 
-// MLContext is the entry point for all ML.NET operations — think of it like
-// a DbContext, but for machine learning pipelines. Seeding it makes results
-// reproducible across runs, which matters when you're comparing trainers later.
 var mlContext = new MLContext(seed: 0);
 
 var dataPath = Path.Combine(AppContext.BaseDirectory, "Data", "telco_churn.csv");
+IDataView fullData = mlContext.Data.LoadFromTextFile<ChurnData>(dataPath, hasHeader: true, separatorChar: ',');
 
-// IDataView is ML.NET's lazy, columnar data structure — it isn't a List<T>,
-// it's evaluated on demand as the pipeline consumes it.
-IDataView fullData = mlContext.Data.LoadFromTextFile<ChurnData>(
-    path: dataPath,
-    hasHeader: true,
-    separatorChar: ',');
+var split = mlContext.Data.TrainTestSplit(fullData, testFraction: 0.2, seed: 0);
+IDataView trainData = split.TrainSet;
+IDataView testData = split.TestSet;
 
-Console.WriteLine("Data loaded successfully.");
+Console.WriteLine("Data loaded and split.");
 
-// Sanity check: preview the first 5 rows to confirm columns mapped correctly
-var preview = fullData.Preview(maxRows: 5);
-foreach (var row in preview.RowView)
+// All categorical (string) columns that need one-hot encoding
+var categoricalColumns = new[]
 {
-    foreach (var col in row.Values)
-    {
-        Console.Write($"{col.Key}: {col.Value} | ");
-    }
-    Console.WriteLine();
-    Console.WriteLine("---");
-}
+    "Gender", "SeniorCitizen", "Married", "Dependents", "ReferredAFriend",
+    "Offer", "PhoneService", "MultipleLines", "InternetService", "InternetType",
+    "OnlineSecurity", "OnlineBackup", "DeviceProtectionPlan", "PremiumTechSupport",
+    "StreamingTV", "StreamingMovies", "StreamingMusic", "UnlimitedData",
+    "Contract", "PaperlessBilling", "PaymentMethod"
+};
+
+// All numeric columns that need normalization
+var numericColumns = new[]
+{
+    "Age", "NumberOfDependents", "NumberOfReferrals", "TenureInMonths",
+    "AvgMonthlyLongDistanceCharges", "AvgMonthlyGBDownload", "MonthlyCharge",
+    "TotalCharges", "TotalRefunds", "TotalExtraDataCharges",
+    "TotalLongDistanceCharges", "SatisfactionScore"
+};
+
+var oneHotPairs = categoricalColumns
+    .Select(c => new InputOutputColumnPair(c + "Encoded", c))
+    .ToArray();
+
+var normalizePairs = numericColumns
+    .Select(c => new InputOutputColumnPair(c + "Normalized", c))
+    .ToArray();
+
+var featureColumns = categoricalColumns.Select(c => c + "Encoded")
+    .Concat(numericColumns.Select(c => c + "Normalized"))
+    .ToArray();
+
+var pipeline = mlContext.Transforms.CustomMapping(
+        new ChurnLabelMappingFactory().GetMapping(), contractName: "ChurnLabelMapping")
+    .Append(mlContext.Transforms.Categorical.OneHotEncoding(oneHotPairs))
+    .Append(mlContext.Transforms.NormalizeMinMax(normalizePairs))
+    .Append(mlContext.Transforms.Concatenate("Features", featureColumns));
+
+// Smoke test: fit the pipeline (no trainer yet) and transform one batch,
+// just to confirm every step works before we add a trainer in Phase 4.
+var preview = pipeline.Fit(trainData).Transform(trainData);
+var firstRow = preview.Preview(maxRows: 1).RowView.First();
+
+var labelValue = firstRow.Values.First(c => c.Key == "Label").Value;
+var featuresValue = firstRow.Values.First(c => c.Key == "Features").Value;
+
+Console.WriteLine($"Label column value: {labelValue}");
+Console.WriteLine($"Features column type: {featuresValue.GetType()}");
