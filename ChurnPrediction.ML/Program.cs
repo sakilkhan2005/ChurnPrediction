@@ -51,13 +51,42 @@ var pipeline = mlContext.Transforms.CustomMapping(
     .Append(mlContext.Transforms.NormalizeMinMax(normalizePairs))
     .Append(mlContext.Transforms.Concatenate("Features", featureColumns));
 
-// Smoke test: fit the pipeline (no trainer yet) and transform one batch,
-// just to confirm every step works before we add a trainer in Phase 4.
-var preview = pipeline.Fit(trainData).Transform(trainData);
-var firstRow = preview.Preview(maxRows: 1).RowView.First();
+// ============================================================
+// Phase 4: Model Training
+// ============================================================
 
-var labelValue = firstRow.Values.First(c => c.Key == "Label").Value;
-var featuresValue = firstRow.Values.First(c => c.Key == "Features").Value;
+// Append a binary classification trainer to the same transform pipeline.
+// SdcaLogisticRegression is a fast, interpretable baseline — a good
+// starting point before comparing against more complex trainers later.
+var trainingPipeline = pipeline.Append(
+    mlContext.BinaryClassification.Trainers.SdcaLogisticRegression(
+        labelColumnName: "Label",
+        featureColumnName: "Features"));
 
-Console.WriteLine($"Label column value: {labelValue}");
-Console.WriteLine($"Features column type: {featuresValue.GetType()}");
+Console.WriteLine("Training model...");
+
+// Fit() runs the ENTIRE pipeline — custom mapping, one-hot encoding,
+// normalization, AND the trainer — against trainData in one pass.
+// This produces a single ITransformer that encapsulates everything.
+var trainedModel = trainingPipeline.Fit(trainData);
+
+Console.WriteLine("Model training complete.");
+
+// Quick smoke test: transform a few rows through the trained model
+// and inspect the output schema, just to confirm predictions exist
+// before we build proper evaluation in Phase 5.
+var predictions = trainedModel.Transform(testData);
+var samplePreview = predictions.Preview(maxRows: 3);
+
+Console.WriteLine("\n--- Sample Predictions ---");
+foreach (var row in samplePreview.RowView)
+{
+    var label = row.Values.First(c => c.Key == "Label").Value;
+    var predictedLabel = row.Values.First(c => c.Key == "PredictedLabel").Value;
+    var score = row.Values.First(c => c.Key == "Score").Value;
+    var probability = row.Values.First(c => c.Key == "Probability").Value;
+
+    Console.WriteLine(
+        $"Actual: {label} | Predicted: {predictedLabel} | " +
+        $"Score: {score} | Probability: {probability}");
+}
