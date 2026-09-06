@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChurnPrediction.ML", "Churn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChurnPrediction.Api", "ChurnPrediction.Api\ChurnPrediction.Api.csproj", "{9B271059-3818-467F-895E-FEFAABA74FCE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChurnPrediction.Tests", "xUnit Test Project\ChurnPrediction.Tests.csproj", "{EB69B2E5-4B3D-49A8-A707-B09AC8D734F6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChurnPrediction.Tests", "ChurnPrediction.Tests\ChurnPrediction.Tests.csproj", "{69C6CE6A-259F-D543-DB67-592AA3A37AF5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{9B271059-3818-467F-895E-FEFAABA74FCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9B271059-3818-467F-895E-FEFAABA74FCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9B271059-3818-467F-895E-FEFAABA74FCE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EB69B2E5-4B3D-49A8-A707-B09AC8D734F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EB69B2E5-4B3D-49A8-A707-B09AC8D734F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EB69B2E5-4B3D-49A8-A707-B09AC8D734F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EB69B2E5-4B3D-49A8-A707-B09AC8D734F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69C6CE6A-259F-D543-DB67-592AA3A37AF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69C6CE6A-259F-D543-DB67-592AA3A37AF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69C6CE6A-259F-D543-DB67-592AA3A37AF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69C6CE6A-259F-D543-DB67-592AA3A37AF5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

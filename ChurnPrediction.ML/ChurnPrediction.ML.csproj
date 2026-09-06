@@ -9,12 +9,17 @@
 
   <ItemGroup>
     <Folder Include="Models\" />
-    <Folder Include="Data\" />
     <Folder Include="Training\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.ML" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Data\telco_churn.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
