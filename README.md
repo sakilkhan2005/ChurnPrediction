@@ -122,4 +122,4 @@ actually shipped in model.zip.*
 
 ## Status
 
-🚧 In progress. Current stage: Phase 7 — ASP.NET Core Web API Integration.
+🚧 In progress. Current stage: Phase 8 — Testing.

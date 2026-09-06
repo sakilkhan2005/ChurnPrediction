@@ -1,15 +1,23 @@
+using ChurnPrediction.Api.Services;
+using ChurnPrediction.ML.Models;
+using ChurnPrediction.ML.Training;
+using Microsoft.Extensions.ML;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var modelPath = Path.Combine(AppContext.BaseDirectory, "MLModels", "model.zip");
+
+builder.Services.AddPredictionEnginePool<ChurnData, ChurnPredictionOutput>()
+    .FromFile(modelName: "ChurnModel", filePath: modelPath, watchForChanges: true);
+
+builder.Services.AddScoped<IPredictionService, PredictionService>();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -17,9 +25,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
