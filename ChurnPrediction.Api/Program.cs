@@ -13,7 +13,7 @@ var modelPath = Path.Combine(AppContext.BaseDirectory, "MLModels", "model.zip");
 
 builder.Services.AddPredictionEnginePool<ChurnData, ChurnPredictionOutput>()
     .FromFile(modelName: "ChurnModel", filePath: modelPath, watchForChanges: true);
-
+builder.Services.AddScoped<IModelPredictor, ModelPredictor>();
 builder.Services.AddScoped<IPredictionService, PredictionService>();
 
 var app = builder.Build();

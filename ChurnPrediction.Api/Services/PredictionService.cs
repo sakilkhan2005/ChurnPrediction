@@ -11,23 +11,20 @@ public class PredictionService : IPredictionService
     // NOT ML.NET's default 0.5. Applied manually here rather than
     // trusting the model's own PredictedLabel output.
     private const float OperatingThreshold = 0.30f;
-
-    private readonly PredictionEnginePool<ChurnData, ChurnPredictionOutput> _predictionEnginePool;
+ 
+    private readonly IModelPredictor _modelPredictor;
     private readonly ILogger<PredictionService> _logger;
 
-    public PredictionService(
-        PredictionEnginePool<ChurnData, ChurnPredictionOutput> predictionEnginePool,
-        ILogger<PredictionService> logger)
+    public PredictionService(IModelPredictor modelPredictor, ILogger<PredictionService> logger)
     {
-        _predictionEnginePool = predictionEnginePool;
+        _modelPredictor = modelPredictor;
         _logger = logger;
     }
 
     public ChurnResponse Predict(ChurnRequest request)
     {
         var input = MapToChurnData(request);
-
-        var prediction = _predictionEnginePool.Predict(modelName: "ChurnModel", example: input);
+        var prediction = _modelPredictor.Predict(input);        
 
         var response = new ChurnResponse
         {
