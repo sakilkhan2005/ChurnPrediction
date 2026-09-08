@@ -1,9 +1,41 @@
 ﻿# Customer Churn Prediction API
 
-An end-to-end machine learning project that predicts customer churn using ML.NET,
-served via an ASP.NET Core Web API. Built to demonstrate applied ML skills within
-the .NET ecosystem — from raw data exploration through to a containerized,
-production-shaped API.
+A production-shaped ML.NET service that predicts customer churn risk, with a
+documented data-leakage investigation and business-driven threshold tuning —
+not just a tutorial clone.
+
+**Stack:** C# · .NET 8 · ML.NET · ASP.NET Core Web API · Docker · xUnit
+
+[Quick Start](#quick-start) · [Dataset](#dataset) · [Key Decisions](#feature-selection--leakage-handling) · [Model Performance](#model-performance--threshold-selection) · [Testing](#testing)
+
+> Built to apply ML.NET in a real, non-trivial way after 15 years in enterprise
+> .NET development — includes a genuine data-leakage catch (see below) rather
+> than a polished-up tutorial result.
+
+---
+
+## Quick Start
+
+```bash
+docker build -t churn-api .
+docker run -p 8080:8080 -e ASPNETCORE_URLS=http://+:8080 -e ASPNETCORE_ENVIRONMENT=Development churn-api
+```
+
+Open `http://localhost:8080/swagger` and try the `POST /api/Prediction` endpoint.
+
+Sample response for a high-risk customer profile (month-to-month contract, 2-month tenure, no add-on services):
+
+```json
+{
+  "willChurn": true,
+  "probability": 0.7347772,
+  "thresholdUsed": 0.3
+}
+```
+
+Full setup, retraining, and testing instructions: [HOW_TO_RUN.md](./HOW_TO_RUN.md)
+
+---
 
 ## Dataset
 
@@ -76,10 +108,6 @@ POST /api/prediction
 Prediction + Probability
 ```
 
-## Tech Stack
-
-C# / .NET 8, ML.NET, ASP.NET Core Web API, xUnit, Docker
-
 ## Model Performance & Threshold Selection
 
 **Algorithm:** SdcaLogisticRegression (ML.NET)
@@ -127,18 +155,11 @@ model actually shipped in `model.zip` uses threshold 0.30.*
   the operating threshold, proving the actual shipped model artifact works end
   to end.
 
-## Running with Docker
+Run via **Test Explorer** in Visual Studio, or `dotnet test` from the solution root.
 
-```bash
-docker build -t churn-api .
-docker run -p 8080:8080 -e ASPNETCORE_URLS=http://+:8080 -e ASPNETCORE_ENVIRONMENT=Development churn-api
-```
+## Tech Stack
 
-Then open `http://localhost:8080/swagger`.
-
-*Note: Swagger UI is intentionally Development-only, per ASP.NET Core
-convention — `ASPNETCORE_ENVIRONMENT=Development` is set here for demo
-purposes only.*
+C# / .NET 8, ML.NET, ASP.NET Core Web API, xUnit, Docker
 
 ## Future Improvements
 
