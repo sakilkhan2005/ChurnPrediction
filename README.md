@@ -33,6 +33,7 @@ Sample response for a high-risk customer profile (month-to-month contract, 2-mon
   "thresholdUsed": 0.3
 }
 ```
+![Swagger UI showing a churn prediction request and response](docs/swagger-demo.png)
 
 Full setup, retraining, and testing instructions: [HOW_TO_RUN.md](./HOW_TO_RUN.md)
 
